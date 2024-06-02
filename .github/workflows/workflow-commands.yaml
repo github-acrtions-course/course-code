@@ -12,6 +12,6 @@ jobs:
             - name: setting an debug with params
               run : echo "::debug title=Debug title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
             - name: setting an worning with params
-              run : echo "::error title=worning title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
+              run : echo "::worning title=worning title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
             - name: setting an notice with params
-              run : echo "::error title=notice title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
+              run : echo "::notice title=notice title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
