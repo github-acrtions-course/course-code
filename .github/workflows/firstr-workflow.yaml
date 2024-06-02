@@ -22,6 +22,8 @@ jobs:
       steps:
         - name: Displaying the os version
           run: systeminfo
+        - name: simution of command error execution
+          run: doesnotexist
 
 
 
