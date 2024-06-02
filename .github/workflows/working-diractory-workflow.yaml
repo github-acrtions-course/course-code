@@ -8,6 +8,16 @@ jobs:
               run: | 
                   pwd
                   ls -a
-                  echo " 1 ====>"  echo  $GITHUB_SHA 
-                  echo " 2 ====>" echo  $GITHUB_REPOSITORY 
-                  ecno " 3 ====>" echo  $GITHUB_WORKSPACE 
+                  echo " 1 ====> $GITHUB_SHA "
+                  echo " 2 ====> $GITHUB_REPOSITORY "
+                  echo " 3 ====> $GITHUB_WORKSPACE "
+    display-wd-info-windows:
+        runs-on: wimndows-latest
+        steps:
+            - name: Display working directory
+              run: | 
+                  pwd
+                  ls -a
+                  echo " 1 ====> $GITHUB_SHA "
+                  echo " 2 ====> $GITHUB_REPOSITORY "
+                  echo " 3 ====> $GITHUB_WORKSPACE "
