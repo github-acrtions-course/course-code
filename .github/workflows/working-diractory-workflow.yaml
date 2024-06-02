@@ -10,4 +10,4 @@ jobs:
                   ls -a
                   echo " 1 ====> $GITHUB_SHA "
                   echo " 2 ====> $GITHUB_REPOSITORY "
-                  ecno " 3 ====> $GITYHUB_WORKSPACE "
+                  ecno " 3 ====> $GITHUB_WORKSPACE "
