@@ -1,0 +1,13 @@
+name: working Dir & Ehell
+on: [push]
+jobs:
+    display-working-directory:
+        runs-on: ubunbu-lastest
+        steps:
+            - name: Display working directory
+              run: |
+                pwd
+                ls -a
+                echo "====>" $GITHUB_SHA
+                echo "====>" $GITHUB_REPOSITORY
+                ecno "====>" $GITYHUB_WORKSPACE
