@@ -7,3 +7,6 @@ jobs:
         steps: 
             - name: seetting an error command
               run: echo  "::error::This is an error message"
+            - name: setting an error with params
+              run : "::error::title=Error title"
+            
