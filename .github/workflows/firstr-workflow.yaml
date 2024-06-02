@@ -23,7 +23,7 @@ jobs:
         - name: Displaying the os version
           run: systeminfo
         - name: simution of command error execution
-          run: doesnotexist tests
+          run: doesnotexist testst
 
 
 

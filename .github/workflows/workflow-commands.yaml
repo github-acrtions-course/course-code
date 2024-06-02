@@ -1,0 +1,9 @@
+name: Workflow commands
+on: [push]
+
+jobs:
+    testing-wf-commands:
+        runs-on: ubuntu-latest
+        steps: 
+            - name: seetting an error command
+              run: echo  "::error::This is an error message"
