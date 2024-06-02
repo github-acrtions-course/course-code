@@ -12,12 +12,12 @@ jobs:
                   echo " 2 ====> $GITHUB_REPOSITORY "
                   echo " 3 ====> $GITHUB_WORKSPACE "
     display-wd-info-windows:
-        runs-on: wimndows-latest
+        runs-on: windows-latest
         steps:
             - name: Display working directory
               run: | 
-                  pwd
-                  ls -a
-                  echo " 1 ====> $GITHUB_SHA "
-                  echo " 2 ====> $GITHUB_REPOSITORY "
-                  echo " 3 ====> $GITHUB_WORKSPACE "
+                  Get-Location
+                  dir
+                  echo " 1 ====> $env:$GITHUB_SHA "
+                  echo " 2 ====> $env:$GITHUB_REPOSITORY "
+                  echo " 3 ====> $env:$GITHUB_WORKSPACE "
