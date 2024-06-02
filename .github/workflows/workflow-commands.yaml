@@ -8,7 +8,7 @@ jobs:
             - name: seetting an error command
               run: echo  "::error::This is an error message"
             - name: setting an error with params
-              run : "::error title=Error title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
+              run : "::error title: Error title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
             - name: setting an debug with params
               run : "::debug title=Debug title, file=app.js, line=2, endLine=3,cole=5, endcol=10::missong Semicolone"
             - name: setting an worning with params
