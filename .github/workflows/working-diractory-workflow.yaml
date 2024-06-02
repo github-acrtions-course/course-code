@@ -1,5 +1,8 @@
 name: working Dir & Ehell
 on: [push]
+defaults:
+    run:
+        shell: bash
 jobs:
     display-wd-info:
         runs-on: ubuntu-latest
