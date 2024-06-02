@@ -8,6 +8,6 @@ jobs:
               run: | 
                   pwd
                   ls -a
-                  echo "====>" $GITHUB_SHA
-                  echo "====>" $GITHUB_REPOSITORY
-                  ecno "====>" $GITYHUB_WORKSPACE
+                  echo "====> $GITHUB_SHA "
+                  echo "====>" $GITHUB_REPOSITORY "
+                  ecno "====>" $GITYHUB_WORKSPACE "
