@@ -35,8 +35,6 @@ jobs:
             - name:  python shell
               shell: python
               run: | 
-                python --version
-                pip --version
                 import platform 
                 print(platform.processor())
 
