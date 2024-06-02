@@ -3,6 +3,7 @@ on: [push]
 defaults:
     run:
         shell: bash
+        #working-directory: ./src  we can overide the default working directory ....
 jobs:
     display-wd-info:
         runs-on: ubuntu-latest
@@ -14,6 +15,10 @@ jobs:
                   echo " 1 ====> $GITHUB_SHA "
                   echo " 2 ====> $GITHUB_REPOSITORY "
                   echo " 3 ====> $GITHUB_WORKSPACE "
+            - name: test changing the default working dir
+              working-directory: /home/runner
+              run: pwd
+              
     display-wd-info-windows:
         runs-on: windows-latest
         defaults:
@@ -27,3 +32,13 @@ jobs:
                   echo  $env:GITHUB_SHA 
                   echo  $env:GITHUB_REPOSITORY 
                   echo  $env:GITHUB_WORKSPACE 
+            - name:  python shell
+              shell: python
+              run: | 
+                python --version
+                pip --version
+                import platform 
+                print(platform.processor())
+
+
+                 
