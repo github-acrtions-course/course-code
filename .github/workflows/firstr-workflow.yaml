@@ -2,7 +2,6 @@ name: First Workflow
 on: [push]
 
 jobs:
-    
     run-shell-command:
         runs-on: ubuntu-latest
         steps:
@@ -12,12 +11,18 @@ jobs:
               run: |
                     node -v 
                     npm -v
-
     parallel-job-execution:
         runs-on: ubuntu-latest
         steps: 
             - name: Displaying the os version
               run: cat /etc/os-release
+    dependent-job-executioin:
+      runs-on: windows-latest
+      needs: run-shell-command
+      steps:
+        - name: Displaying the os version
+          run: systeminfo
+
 
 
 
