@@ -2,7 +2,7 @@ name: working Dir & Ehell
 on: [push]
 jobs:
     display-working-directory:
-        runs-on: ubunbu-lastest
+        runs-on: ubunbu-latest
         steps:
             - name: Display working directory
               run: |
