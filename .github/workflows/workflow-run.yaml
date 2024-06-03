@@ -1,0 +1,10 @@
+name: trigger workflow based on the execution of another workflow
+on:
+    workflow_run:
+        workflows: ["Repository events"]
+        types: [completed]
+jobs:
+    echo-some-string:
+        runs-on: ubuntu-latest
+        steps:
+            - run: echo "This is a message
