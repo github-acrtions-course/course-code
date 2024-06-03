@@ -1,0 +1,17 @@
+name: Stale Issues & Prs
+on:
+    schedule:
+        - cron: '0 14 * * *'
+        - cron: '0/5 * * * *'
+jobs:
+    stale-issue-and-PR:
+            runs-on: ubuntu-latest
+            steps:
+                - uses: actions/stale@v8
+                  with:
+                        stale-issue-message: 'This issue will be closed if no further activity occurs. Please provide more information to keep it open.'
+                        stale-pr-message: 'This PR will be closed if no further activity occurs. Please provide more information to keep it open.'
+                        days-before-stale: 30
+                        days-before-close: 7
+                  
+
