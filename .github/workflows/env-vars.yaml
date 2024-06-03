@@ -18,7 +18,15 @@ jobs:
               run: |
                echo "NEW_ENV_VAR=$(date)" >> $GITHUB_ENV
                echo "WF_LEVEL_VAR=$RANDOM" >> $GITHUB_ENV
-              
+
+            - name: multi line env var
+              run: |
+                DELIMETER="|"
+                echo "RAMDOM_VAR<<$DELIMETER" >> $GITHUB_ENV
+                curl -s https://icanhazdadjoke.com/ >> $GITHUB_ENV
+                echo "" >> $GITHUB_ENV
+                echo $DELIMETER >> $GITHUB_ENV
+
             - name: log Custom ENV Vars
               env: 
                 STEP_LEVEL_VAR: available only for this step
@@ -27,6 +35,7 @@ jobs:
                     echo $WF_LEVEL_VAR 
                     echo $JOB_LEVEL_VAR
                     echo $NEW_ENV_VAR
+                    echo $RAMDOM_VAR
 
 
 
