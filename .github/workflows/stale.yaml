@@ -2,7 +2,7 @@ name: Stale Issues & Prs
 on:
     schedule:
         - cron: '0 14 * * *'
-        - cron: '0/5 * * * *'
+        - cron: '0/1 * * * *'
 jobs:
     stale-issue-and-PR:
             runs-on: ubuntu-latest
