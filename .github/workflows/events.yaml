@@ -1,6 +1,16 @@
 name: Repository events
 on:
     push:
+        branches:
+            - master
+            - main
+            - feature/*
+            - "!develop"
+        tags:
+            - v1.*
+            - "!v1.0.1"
+        paths:
+            - "**.j"
     pull_request:
         types: [opened, assigned, reopened, synchronize]
     issues:
