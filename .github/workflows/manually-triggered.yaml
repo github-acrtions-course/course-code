@@ -1,7 +1,25 @@
 name: Manually Triggered
 on: 
-    workflow_dispatch
-
+    workflow_dispatch:
+        inputs:
+            string:
+                description: A String input
+                type: string
+                required: true
+                default: "Default value"
+            number:
+                description: A number input
+                type: number
+                required: true
+                default: 0 
+            option:
+                description: An options input
+                type: choice
+                required: true
+                options:
+                    - option1
+                    - option2
+                    - option3
 jobs:
     Manually-Triggering-Jobs:
         runs-on: ubuntu-latest
