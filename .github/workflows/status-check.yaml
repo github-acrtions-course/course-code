@@ -1,0 +1,31 @@
+name: Status Check Function
+on:
+    push:
+        
+jobs:
+    job-1:
+        runs-on: ubuntu-latest
+        steps:
+            - name: step 1 
+              run: speel 20
+            - name: Runs on Failure
+              if: failure()
+              run: echo "This job ran on failure"
+            - name: Runs on Success
+              # This is not needed as it is default behavior
+              if: success()
+              run: echo "This job ran on success"
+            - name: Runs on Cancel
+              if: cancelled()
+              run: echo "This job ran on cancel"
+            - name: Runs on always
+              # if success ||  failure
+              if: always()
+              run: echo "This job ran always"
+    job-2:
+        runs-on: ubuntu-latest
+        needs: job-1
+        if: failure() 
+        steps:
+            - name: run on falure
+              run: echo "This job ran on failure"
