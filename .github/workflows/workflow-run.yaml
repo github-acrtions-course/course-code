@@ -7,4 +7,4 @@ jobs:
     echo-some-string:
         runs-on: ubuntu-latest
         steps:
-            - run: echo "This is a message
+            - run: echo "This is a message"
