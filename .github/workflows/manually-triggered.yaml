@@ -20,9 +20,26 @@ on:
                     - option1
                     - option2
                     - option3
+            boolean:
+                description: A boolean input
+                type: boolean
+                required: true
+                default: false
+            environment:
+                description: Environment
+                type: environment
+                required: true
 jobs:
     Manually-Triggering-Jobs:
         runs-on: ubuntu-latest
         steps:
             - run: echo $GITHUB_REF
+            - run: |
+               echo " String:  ${{ inputs.string  }} "
+               echo " Number:  ${{ inputs.number  }} "
+               echo " Option:  ${{ inputs.option  }} "
+               echo " Boolean: ${{ inputs.boolean }} "
+               echo " Environment: ${{ inputs.environment }}    "
+
+        
 
