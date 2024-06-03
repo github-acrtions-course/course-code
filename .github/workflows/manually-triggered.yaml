@@ -15,7 +15,7 @@ on:
             option:
                 description: An options input
                 type: choice
-                required: true
+                required: false
                 options:
                     - option1
                     - option2
@@ -23,7 +23,7 @@ on:
             boolean:
                 description: A boolean input
                 type: boolean
-                required: true
+                required: false
                 default: false
             environment:
                 description: Environment
