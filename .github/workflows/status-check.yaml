@@ -8,6 +8,8 @@ jobs:
         steps:
             - name: step 1 
               run:  sleep 20
+            - name: fail
+              run: exit 1
             - name: Runs on Failure
               if: failure()
               run: echo "This job ran on failure"
