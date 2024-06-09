@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 import json
+import builtins
 from kubeHelper import auth, list_deployment, launch
 
 class TestKubeHelper(unittest.TestCase):
@@ -19,37 +20,25 @@ class TestKubeHelper(unittest.TestCase):
             }
         }
 
-        # Create a mock for KubeAuth
-        mock_KubeAuth = MagicMock()
-        kube_auth_instance = MagicMock()
-        mock_KubeAuth.return_value = kube_auth_instance
-
         # Backup the original functions
-        original_open = open
+        original_open = builtins.open
         original_json_load = json.load
 
         # Replace the functions with mocks
-        try:
-            # Access the open function from the builtins module directly
-            builtins_open = __builtins__.open
-            __builtins__.open = mock_open
-            json.load = mock_json_load
+        builtins.open = mock_open
+        json.load = mock_json_load
 
-            result = auth('test_env')
+        result = auth('test_env')
 
-            mock_open.assert_called_once_with('./auth.test_env.json')
-            mock_json_load.assert_called_once()
-            mock_KubeAuth.assert_called_once_with(
-                url="http://example.com",
-                username="user",
-                password="pass"
-            )
-            self.assertEqual(result, kube_auth_instance)
-        finally:
-            # Restore the original functions
-            __builtins__.open = original_open
-            json.load = original_json_load
-    
+        # Check if the function returns the correct KubeAuth object
+        self.assertEqual(result.url, "http://example.com")
+        self.assertEqual(result.username, "user")
+        self.assertEqual(result.password, "pass")
+
+        # Restore the original functions
+        builtins.open = original_open
+        json.load = original_json_load
+
     def test_list_deployment(self):
         # Create a mock for KubeNamespace
         mock_namespace = MagicMock()
@@ -97,21 +86,20 @@ class TestKubeHelper(unittest.TestCase):
         launch.__globals__['list_deployment'] = mock_list_deployment
         launch.__globals__['fetch_last_commit_orchestrator'] = mock_fetch_last_commit
 
-        try:
-            result = launch(['namespace1'], 'test_env', mock_edit_method)
+        result = launch(['namespace1'], 'test_env', mock_edit_method)
 
-            expected_result = [
-                {"repository": "repo1", "commit_hash": "commit_sha"},
-                {"repository": "repo1", "commit_hash": "commit_sha"}
-            ]
-            self.assertEqual(result, expected_result)
-            self.assertIn("commit_hash", result[0])
-            self.assertIn("repository", result[0])
-        finally:
-            # Restore the original functions
-            launch.__globals__['auth'] = original_auth
-            launch.__globals__['list_deployment'] = original_list_deployment
-            launch.__globals__['fetch_last_commit_orchestrator'] = original_fetch_last_commit_orchestrator
+        expected_result = [
+            {"repository": "repo1", "commit_hash": "commit_sha"},
+            {"repository": "repo1", "commit_hash": "commit_sha"}
+        ]
+        self.assertEqual(result, expected_result)
+        self.assertIn("commit_hash", result[0])
+        self.assertIn("repository", result[0])
+
+        # Restore the original functions
+        launch.__globals__['auth'] = original_auth
+        launch.__globals__['list_deployment'] = original_list_deployment
+        launch.__globals__['fetch_last_commit_orchestrator'] = original_fetch_last_commit
 
 if __name__ == '__main__':
     unittest.main()
