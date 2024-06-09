@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
+import json
 from kubeHelper import auth, list_deployment, launch
 
 class TestKubeHelper(unittest.TestCase):
@@ -18,17 +19,21 @@ class TestKubeHelper(unittest.TestCase):
             }
         }
 
-        # Replace the builtins.open and json.load with our mocks
-        builtins_open_backup = open
-        json_load_backup = json.load
-        try:
-            open = mock_open
-            json.load = mock_json_load
+        # Create a mock for KubeAuth
+        mock_KubeAuth = MagicMock()
+        kube_auth_instance = MagicMock()
+        mock_KubeAuth.return_value = kube_auth_instance
 
-            # Create a mock for KubeAuth
-            mock_KubeAuth = MagicMock()
-            kube_auth_instance = MagicMock()
-            mock_KubeAuth.return_value = kube_auth_instance
+        # Backup the original functions
+        original_open = open
+        original_json_load = json.load
+
+        # Replace the functions with mocks
+        try:
+            # Access the open function from the builtins module directly
+            builtins_open = __builtins__.open
+            __builtins__.open = mock_open
+            json.load = mock_json_load
 
             result = auth('test_env')
 
@@ -42,8 +47,8 @@ class TestKubeHelper(unittest.TestCase):
             self.assertEqual(result, kube_auth_instance)
         finally:
             # Restore the original functions
-            open = builtins_open_backup
-            json.load = json_load_backup
+            __builtins__.open = original_open
+            json.load = original_json_load
     
     def test_list_deployment(self):
         # Create a mock for KubeNamespace
