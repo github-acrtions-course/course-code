@@ -84,5 +84,37 @@ class TestKubeHelper(unittest.TestCase):
         self.assertIn("commit_hash", result[0])
         self.assertIn("repository", result[0])
 
+   @patch('kubeHelper.auth')
+    @patch('kubeHelper.list_deployment')
+    @patch('kubeHelper.fetch_last_commit_orchestrator')
+    def test_launch(self, mock_fetch_last_commit, mock_list_deployment, mock_auth):
+        mock_auth.return_value = MagicMock()
+
+        mock_list_deployment.return_value = [
+            {"metadata": {"name": "app1"}},
+            {"metadata": {"name": "app2"}}
+        ]
+
+        mock_fetch_last_commit.return_value = "commit_sha"
+
+        def mock_edit_method(deployment, env):
+            return {"repository": "repo1"}
+
+        result = launch(
+            namespaces=['namespace1'],
+            env='test_env',
+            edit_method=mock_edit_method
+        )
+
+        expected_result = [
+            {"repository": "repo1", "commit_hash": "commit_sha"},
+            {"repository": "repo1", "commit_hash": "commit_sha"}
+        ]
+        self.assertEqual(result, expected_result)
+        self.assertIn("commit_hash", result[0])
+        self.assertIn("repository", result[0])
+
+
+
 if __name__ == '__main__':
     unittest.main()
