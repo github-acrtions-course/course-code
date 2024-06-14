@@ -32,18 +32,17 @@ class KubeHelper:
 
                 services_details.append(service)
         
-        services_to_process = [service for service in services_details if service["commit_hash"] == service["image_commit_hash"]]
-        services_details, rejected_services = self.parallel_build_tag_image(services_to_process, services_details, rejected_services)
+        services_details, rejected_services = self.parallel_build_tag_image(services_details, rejected_services)
 
         return services_details, rejected_services
 
-    def parallel_build_tag_image(self, services_to_process, services_details, rejected_services):
+    def parallel_build_tag_image(self, services_details, rejected_services):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_service = {
                 executor.submit(self.jenkins_client.get_new_build_tag_image, 
                                 service["jenkins_build_job_name"], 
                                 service["organization"]): service
-                for service in services_to_process
+                for service in services_details if service["commit_hash"] == service["image_commit_hash"]
             }
 
             for future in as_completed(future_to_service):
@@ -57,6 +56,12 @@ class KubeHelper:
                 except Exception as e:
                     print(f"Service {service['name']} generated an exception: {e}")
                     rejected_services.append(service)
+
+        # Add services that were not processed to rejected_services
+        for service in services_details:
+            if service["commit_hash"] != service["image_commit_hash"]:
+                rejected_services.append(service)
+
         return services_details, rejected_services
 
 # Usage:
