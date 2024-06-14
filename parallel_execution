@@ -1,0 +1,67 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+class KubeHelper:
+    def __init__(self, kubernetes_client, jenkins_client, max_workers=20):
+        self.kubernetes_client = kubernetes_client
+        self.jenkins_client = jenkins_client
+        self.max_workers = max_workers
+
+    def list_deployment(self, namespaces):
+        deployment_list = []
+        for ns in namespaces:
+            deploy_data = self.kubernetes_client.get_deployment_list(ns)
+            deployment_list.append(deploy_data)
+        return deployment_list
+
+    def build_target_build(self, namespaces, env, fetch_method):
+        deployment_list = self.list_deployment(namespaces)
+        services_details = []
+        rejected_services = []
+
+        for deployment in deployment_list:
+            services = fetch_method(deployment, env)
+            for service in services:
+                github_commit_sha_and_default_branch = fetch_last_commit_orchestrator(service["repository"])
+                service.update({
+                    "commit_hash": github_commit_sha_and_default_branch[0],
+                    "default_branch": github_commit_sha_and_default_branch[1]
+                })
+
+                job_names = get_jenkins_build_and_run_job_name(service)
+                service.update({"jenkins_run_job_name": job_names[0], "jenkins_build_job_name": job_names[1]})
+
+        # Filter services before submitting tasks to executor
+        filtered_services = [service for service in services if service["commit_hash"] == service["image_commit_hash"]]
+
+        # Perform the Jenkins build tag image calls in parallel
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            future_to_service = {
+                executor.submit(self.jenkins_client.get_new_build_tag_image, 
+                                service["jenkins_build_job_name"], 
+                                service["organization"]): service
+                for service in filtered_services
+            }
+
+            for future in as_completed(future_to_service):
+                service = future_to_service[future]
+                try:
+                    build_service_response = future.result()
+                    if build_service_response["status"] == "SUCCESS":
+                        service.update({"new_image_tag": build_service_response[2]})
+                        services_details.append(service)
+                    else:
+                        rejected_services.append(service)
+                except Exception as e:
+                    print(f"Service {service['name']} generated an exception: {e}")
+                    rejected_services.append(service)
+
+        return services_details, rejected_services
+
+# Usage:
+# kube_client = KubernetesClient()
+# jenkins_client = JenkinsClientAdapter(env)
+# kube_helper = KubeHelper(kube_client, jenkins_client)
+# namespaces = ["namespace1", "namespace2"]
+# env = "env"
+# fetch_method = some_fetch_method
+# kube_helper.build_target_build(namespaces, env, fetch_method)
