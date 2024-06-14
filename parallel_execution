@@ -30,16 +30,20 @@ class KubeHelper:
                 job_names = get_jenkins_build_and_run_job_name(service)
                 service.update({"jenkins_run_job_name": job_names[0], "jenkins_build_job_name": job_names[1]})
 
-        # Filter services before submitting tasks to executor
-        filtered_services = [service for service in services if service["commit_hash"] == service["image_commit_hash"]]
+                services_details.append(service)
+        
+        services_to_process = [service for service in services_details if service["commit_hash"] == service["image_commit_hash"]]
+        services_details, rejected_services = self.parallel_build_tag_image(services_to_process, services_details, rejected_services)
 
-        # Perform the Jenkins build tag image calls in parallel
+        return services_details, rejected_services
+
+    def parallel_build_tag_image(self, services_to_process, services_details, rejected_services):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_service = {
                 executor.submit(self.jenkins_client.get_new_build_tag_image, 
                                 service["jenkins_build_job_name"], 
                                 service["organization"]): service
-                for service in filtered_services
+                for service in services_to_process
             }
 
             for future in as_completed(future_to_service):
@@ -48,13 +52,11 @@ class KubeHelper:
                     build_service_response = future.result()
                     if build_service_response["status"] == "SUCCESS":
                         service.update({"new_image_tag": build_service_response[2]})
-                        services_details.append(service)
                     else:
                         rejected_services.append(service)
                 except Exception as e:
                     print(f"Service {service['name']} generated an exception: {e}")
                     rejected_services.append(service)
-
         return services_details, rejected_services
 
 # Usage:
