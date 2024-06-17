@@ -1,0 +1,32 @@
+name: Setup and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        description: 'Environment to setup'
+        required: true
+        default: 'dev'
+
+jobs:
+  setup-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Call environment setup workflow
+      uses: ./.github/workflows/setup-env.yml
+      with:
+        env: ${{ inputs.env }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Install dependencies from requirements.txt
+
+    - name: Run deployment script
+      run: python RegularDeploy.py
