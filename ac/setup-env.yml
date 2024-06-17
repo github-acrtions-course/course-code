@@ -1,0 +1,34 @@
+name: Setup Environment
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        description: 'Environment to setup'
+        required: true
+        default: 'dev'
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup kubeconfig
+      run: |
+        mkdir -p ~/.kube
+        if [[ "${{ inputs.env }}" == "prod" ]]; then
+          echo "${{ secrets.KUBECONFIG_PROD }}" > ~/.kube/config
+        else
+          echo "${{ secrets.KUBECONFIG_DEV }}" > ~/.kube/config
+        fi
+
+    - name: Setup Jenkins auth
+      run: |
+        if [[ "${{ inputs.env }}" == "prod" ]]; then
+          echo "${{ secrets.AUTH_PRD_JSON }}" > auth.prd.json
+        else
+          echo "${{ secrets.AUTH_DEV_JSON }}" > auth.dev.json
+        fi
