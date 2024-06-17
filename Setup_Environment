@@ -1,0 +1,34 @@
+name: Setup Environment
+
+on:
+  workflow_call:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup kubeconfig for dev, hom, and uat
+      if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/hom' || github.ref == 'refs/heads/uat'
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG_DEV }}" > ~/.kube/config
+
+    - name: Setup kubeconfig for prod
+      if: github.ref == 'refs/heads/master'
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG_PROD }}" > ~/.kube/config
+
+    - name: Setup Jenkins auth for dev, hom, and uat
+      if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/hom' || github.ref == 'refs/heads/uat'
+      run: |
+        echo "${{ secrets.AUTH_DEV_JSON }}" > auth.dev.json
+
+    - name: Setup Jenkins auth for prod
+      if: github.ref == 'refs/heads/master'
+      run: |
+        echo "${{ secrets.AUTH_PRD_JSON }}" > auth.prd.json
