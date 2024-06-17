@@ -1,37 +1,56 @@
 import unittest
-from jenkins_helper import JenkinsHelper
+from unittest.mock import patch, MagicMock
+from KubernetesClient import KubernetesClient
 
-class TestJenkinsHelper(unittest.TestCase):
-    def setUp(self):
-        self.helper = JenkinsHelper()
+class TestKubernetesClient(unittest.TestCase):
 
-    def test_get_jenkins_path_org(self):
-        self.assertEqual(self.helper.get_jenkins_path_org("some-ogn-prd"), ["ItceFccOsd-Builds", "ItceFccOsd-Ops"])
-        self.assertEqual(self.helper.get_jenkins_path_org("some-cav-hom"), ["CreditApproval", "CreditApproval"])
-        self.assertEqual(self.helper.get_jenkins_path_org("some-mcm2-prd"), ["debt-capital-markets", "debt-capital-markets"])
-        self.assertEqual(self.helper.get_jenkins_path_org("some-unknown-hom"), [])
+    @patch('KubernetesClient.client.AppsV1Api')
+    @patch('KubernetesClient.config.load_kube_config')
+    def test_kube_client_apps_v1(self, mock_load_kube_config, mock_apps_v1_api):
+        # Arrange
+        mock_apps_v1 = MagicMock()
+        mock_apps_v1_api.return_value = mock_apps_v1
+        kube_client = KubernetesClient()
 
-    def test_get_respo_name(self):
-        self.assertEqual(self.helper.get_respo_name("https://github.com/username/repo-name.git"), "reponame")
-        self.assertEqual(self.helper.get_respo_name("https://github.com/username/repo-name"), "reponame")
+        # Act
+        result = kube_client.kube_client_apps_v1()
 
-    def test_get_default_run_branch(self):
-        self.assertEqual(self.helper.get_default_run_branch("dev"), "hom")
-        self.assertEqual(self.helper.get_default_run_branch("prd"), "prd")
+        # Assert
+        mock_load_kube_config.assert_called_once_with(kube_client.KUBE_CONFIG_LOCATION)
+        mock_apps_v1_api.assert_called_once()
+        self.assertEqual(result, mock_apps_v1)
 
-    def test_get_jenkins_build_and_run_job_name(self):
-        service = {
-            "namespace": "some-ogn-prd",
-            "env": "prd",
-            "repository": "https://github.com/username/repo-name.git",
-            "commit_hash": "abc123",
-            "image_commit_hash": "abc123",
-            "default_branch": "main"
-        }
-        self.assertEqual(self.helper.get_jenkins_build_and_run_job_name(service), ("ItceFccOsd-Builds/reponame/main", "ItceFccOsd-Ops/reponame-run/prd"))
+    @patch('KubernetesClient.client.CoreV1Api')
+    @patch('KubernetesClient.config.load_kube_config')
+    def test_kube_client_core_v1(self, mock_load_kube_config, mock_core_v1_api):
+        # Arrange
+        mock_core_v1 = MagicMock()
+        mock_core_v1_api.return_value = mock_core_v1
+        kube_client = KubernetesClient()
 
-        service["commit_hash"] = "different_hash"
-        self.assertEqual(self.helper.get_jenkins_build_and_run_job_name(service), ("", "ItceFccOsd-Ops/reponame-run/prd"))
+        # Act
+        result = kube_client.kube_client_core_v1()
+
+        # Assert
+        mock_load_kube_config.assert_called_once_with(kube_client.KUBE_CONFIG_LOCATION)
+        mock_core_v1_api.assert_called_once()
+        self.assertEqual(result, mock_core_v1)
+
+    @patch('KubernetesClient.KubernetesClient.kube_client_apps_v1')
+    def test_get_deployment_list(self, mock_kube_client_apps_v1):
+        # Arrange
+        mock_apps_v1 = MagicMock()
+        mock_kube_client_apps_v1.return_value = mock_apps_v1
+        mock_apps_v1.list_namespaced_deployment.return_value = 'mock_deployments'
+        kube_client = KubernetesClient()
+
+        # Act
+        result = kube_client.get_deployment_list('default')
+
+        # Assert
+        mock_kube_client_apps_v1.assert_called_once()
+        mock_apps_v1.list_namespaced_deployment.assert_called_once_with('default')
+        self.assertEqual(result, 'mock_deployments')
 
 if __name__ == '__main__':
     unittest.main()
