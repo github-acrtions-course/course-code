@@ -1,133 +1,37 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from JenkinsClientAdapter import JenkinsClientAdapter
+from jenkins_helper import JenkinsHelper
 
+class TestJenkinsHelper(unittest.TestCase):
+    def setUp(self):
+        self.helper = JenkinsHelper()
 
-class TestJenkinsClientAdapter(unittest.TestCase):
+    def test_get_jenkins_path_org(self):
+        self.assertEqual(self.helper.get_jenkins_path_org("some-ogn-prd"), ["ItceFccOsd-Builds", "ItceFccOsd-Ops"])
+        self.assertEqual(self.helper.get_jenkins_path_org("some-cav-hom"), ["CreditApproval", "CreditApproval"])
+        self.assertEqual(self.helper.get_jenkins_path_org("some-mcm2-prd"), ["debt-capital-markets", "debt-capital-markets"])
+        self.assertEqual(self.helper.get_jenkins_path_org("some-unknown-hom"), [])
 
-    @patch('jenkins.Jenkins')
-    def test_get_server_instance(self, MockJenkins):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = MockJenkins.return_value
+    def test_get_respo_name(self):
+        self.assertEqual(self.helper.get_respo_name("https://github.com/username/repo-name.git"), "reponame")
+        self.assertEqual(self.helper.get_respo_name("https://github.com/username/repo-name"), "reponame")
 
-        with patch('builtins.open', unittest.mock.mock_open(read_data='{"jenkins": {"test_org": {"url": "http://jenkins.url", "username": "user", "token": "token"}}}')):
-            jenkins_instance = adapter.get_server_instance('test_org')
+    def test_get_default_run_branch(self):
+        self.assertEqual(self.helper.get_default_run_branch("dev"), "hom")
+        self.assertEqual(self.helper.get_default_run_branch("prd"), "prd")
 
-        MockJenkins.assert_called_once_with('http://jenkins.url', 'user', 'token')
-        self.assertEqual(jenkins_instance, mock_jenkins_instance)
+    def test_get_jenkins_build_and_run_job_name(self):
+        service = {
+            "namespace": "some-ogn-prd",
+            "env": "prd",
+            "repository": "https://github.com/username/repo-name.git",
+            "commit_hash": "abc123",
+            "image_commit_hash": "abc123",
+            "default_branch": "main"
+        }
+        self.assertEqual(self.helper.get_jenkins_build_and_run_job_name(service), ("ItceFccOsd-Builds/reponame/main", "ItceFccOsd-Ops/reponame-run/prd"))
 
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_job_detail(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.get_job_info.return_value = {"name": "test_job"}
-
-        job_detail = adapter.get_job_detail("test_job", "test_org")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_jenkins_instance.get_job_info.assert_called_once_with('test_job')
-        self.assertEqual(job_detail, {"name": "test_job"})
-
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_job_detail_queue_item(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.get_queue_item.return_value = {"id": 123}
-
-        queue_item_detail = adapter.get_job_detail_queue_item(123, "test_org")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_jenkins_instance.get_queue_item.assert_called_once_with(123)
-        self.assertEqual(queue_item_detail, {"id": 123})
-
-    @patch.object(JenkinsClientAdapter, 'get_triggered_build_number')
-    @patch.object(JenkinsClientAdapter, 'trigger_build')
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_run_new_jenkins_build(self, mock_get_server_instance, mock_trigger_build, mock_get_triggered_build_number):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_trigger_build.return_value = 1
-        mock_get_triggered_build_number.return_value = 100
-        mock_jenkins_instance.get_build_info.return_value = {"building": False, "result": "SUCCESS"}
-
-        build_number, build_result = adapter.run_new_jenkins_build("test_job", "test_org")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_trigger_build.assert_called_once_with("test_job", "test_org", None)
-        mock_get_triggered_build_number.assert_called_once()
-        self.assertEqual(build_number, 100)
-        self.assertEqual(build_result, "SUCCESS")
-
-    @patch.object(JenkinsClientAdapter, 'get_generated_image_tag')
-    @patch.object(JenkinsClientAdapter, 'run_new_jenkins_build')
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_new_build_tag_image(self, mock_get_server_instance, mock_run_new_jenkins_build, mock_get_generated_image_tag):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_run_new_jenkins_build.return_value = (100, "SUCCESS")
-        mock_get_generated_image_tag.return_value = "image:tag"
-
-        build_number, build_result, new_build_tag = adapter.get_new_build_tag_image("test_job", "test_org")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_run_new_jenkins_build.assert_called_once_with("test_job", "test_org")
-        mock_get_generated_image_tag.assert_called_once()
-        self.assertEqual(build_number, 100)
-        self.assertEqual(build_result, "SUCCESS")
-        self.assertEqual(new_build_tag, "image:tag")
-
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_generated_image_tag(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.get_build_console_output.return_value = "Pushing image to repo/image:tag"
-
-        new_build_tag = adapter.get_generated_image_tag(100, mock_jenkins_instance, "test_job")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_jenkins_instance.get_build_console_output.assert_called_once_with("test_job", 100)
-        self.assertEqual(new_build_tag, "image:tag")
-
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_triggered_build_status(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.get_build_info.side_effect = [
-            {"building": True},
-            {"building": False, "result": "SUCCESS"}
-        ]
-
-        build_result = adapter.get_triggered_build_status(100, mock_jenkins_instance, "test_job")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        self.assertEqual(build_result, "SUCCESS")
-
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_get_triggered_build_number(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.get_queue_item.side_effect = [
-            {},
-            {"executable": {"number": 100}}
-        ]
-
-        build_number = adapter.get_triggered_build_number(None, mock_jenkins_instance, 1)
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        self.assertEqual(build_number, 100)
-
-    @patch.object(JenkinsClientAdapter, 'get_server_instance')
-    def test_trigger_build(self, mock_get_server_instance):
-        adapter = JenkinsClientAdapter(env="test")
-        mock_jenkins_instance = mock_get_server_instance.return_value
-        mock_jenkins_instance.build_job.return_value = 1
-
-        queue_item_number = adapter.trigger_build("test_job", "test_org")
-
-        mock_get_server_instance.assert_called_once_with('test_org')
-        mock_jenkins_instance.build_job.assert_called_once_with("test_job", None)
-        self.assertEqual(queue_item_number, 1)
-
+        service["commit_hash"] = "different_hash"
+        self.assertEqual(self.helper.get_jenkins_build_and_run_job_name(service), ("", "ItceFccOsd-Ops/reponame-run/prd"))
 
 if __name__ == '__main__':
     unittest.main()
