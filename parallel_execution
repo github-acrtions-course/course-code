@@ -1,74 +1,133 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import unittest
+from unittest.mock import patch, MagicMock
+from JenkinsClientAdapter import JenkinsClientAdapter
 
-class KubeHelper:
-    def __init__(self, kubernetes_client, jenkins_client, max_workers=20):
-        self.kubernetes_client = kubernetes_client
-        self.jenkins_client = jenkins_client
-        self.max_workers = max_workers
 
-    def list_deployment(self, namespaces):
-        deployment_list = []
-        for ns in namespaces:
-            deploy_data = self.kubernetes_client.get_deployment_list(ns)
-            deployment_list.append(deploy_data)
-        return deployment_list
+class TestJenkinsClientAdapter(unittest.TestCase):
 
-    def build_target_build(self, namespaces, env, fetch_method):
-        deployment_list = self.list_deployment(namespaces)
-        services_details = []
-        rejected_services = []
+    @patch('jenkins.Jenkins')
+    def test_get_server_instance(self, MockJenkins):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = MockJenkins.return_value
 
-        for deployment in deployment_list:
-            services = fetch_method(deployment, env)
-            for service in services:
-                github_commit_sha_and_default_branch = fetch_last_commit_orchestrator(service["repository"])
-                service.update({
-                    "commit_hash": github_commit_sha_and_default_branch[0],
-                    "default_branch": github_commit_sha_and_default_branch[1]
-                })
+        with patch('builtins.open', unittest.mock.mock_open(read_data='{"jenkins": {"test_org": {"url": "http://jenkins.url", "username": "user", "token": "token"}}}')):
+            jenkins_instance = adapter.get_server_instance('test_org')
 
-                job_names = get_jenkins_build_and_run_job_name(service)
-                service.update({"jenkins_run_job_name": job_names[0], "jenkins_build_job_name": job_names[1]})
+        MockJenkins.assert_called_once_with('http://jenkins.url', 'user', 'token')
+        self.assertEqual(jenkins_instance, mock_jenkins_instance)
 
-                services_details.append(service)
-        
-        services_details, rejected_services = self.parallel_build_tag_image(services_details, rejected_services)
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_job_detail(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.get_job_info.return_value = {"name": "test_job"}
 
-        return services_details, rejected_services
+        job_detail = adapter.get_job_detail("test_job", "test_org")
 
-    def parallel_build_tag_image(self, services_details, rejected_services):
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            future_to_service = {
-                executor.submit(self.jenkins_client.get_new_build_tag_image, 
-                                service["jenkins_build_job_name"], 
-                                service["organization"]): service
-                for service in services_details if service["commit_hash"] == service["image_commit_hash"]
-            }
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_jenkins_instance.get_job_info.assert_called_once_with('test_job')
+        self.assertEqual(job_detail, {"name": "test_job"})
 
-            for future in as_completed(future_to_service):
-                service = future_to_service[future]
-                try:
-                    build_service_response = future.result()
-                    if build_service_response["status"] == "SUCCESS":
-                        service.update({"new_image_tag": build_service_response[2]})
-                    else:
-                        rejected_services.append(service)
-                except Exception as e:
-                    print(f"Service {service['name']} generated an exception: {e}")
-                    rejected_services.append(service)
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_job_detail_queue_item(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.get_queue_item.return_value = {"id": 123}
 
-        # Add services that were not processed to rejected_services
-        for service in services_details:
-            if service["commit_hash"] != service["image_commit_hash"]:
-                rejected_services.append(service)
+        queue_item_detail = adapter.get_job_detail_queue_item(123, "test_org")
 
-        return services_details, rejected_services
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_jenkins_instance.get_queue_item.assert_called_once_with(123)
+        self.assertEqual(queue_item_detail, {"id": 123})
 
-# Usage:
-# kube_client = KubernetesClient()
-# jenkins_client = JenkinsClientAdapter(env)
-# kube_helper = KubeHelper(kube_client, jenkins_client)
-# namespaces = ["namespace1", "namespace2"]
-# env = "env"
-# fetch_method = some_fetch_method
-# kube_helper.build_target_build(namespaces, env, fetch_method)
+    @patch.object(JenkinsClientAdapter, 'get_triggered_build_number')
+    @patch.object(JenkinsClientAdapter, 'trigger_build')
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_run_new_jenkins_build(self, mock_get_server_instance, mock_trigger_build, mock_get_triggered_build_number):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_trigger_build.return_value = 1
+        mock_get_triggered_build_number.return_value = 100
+        mock_jenkins_instance.get_build_info.return_value = {"building": False, "result": "SUCCESS"}
+
+        build_number, build_result = adapter.run_new_jenkins_build("test_job", "test_org")
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_trigger_build.assert_called_once_with("test_job", "test_org", None)
+        mock_get_triggered_build_number.assert_called_once()
+        self.assertEqual(build_number, 100)
+        self.assertEqual(build_result, "SUCCESS")
+
+    @patch.object(JenkinsClientAdapter, 'get_generated_image_tag')
+    @patch.object(JenkinsClientAdapter, 'run_new_jenkins_build')
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_new_build_tag_image(self, mock_get_server_instance, mock_run_new_jenkins_build, mock_get_generated_image_tag):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_run_new_jenkins_build.return_value = (100, "SUCCESS")
+        mock_get_generated_image_tag.return_value = "image:tag"
+
+        build_number, build_result, new_build_tag = adapter.get_new_build_tag_image("test_job", "test_org")
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_run_new_jenkins_build.assert_called_once_with("test_job", "test_org")
+        mock_get_generated_image_tag.assert_called_once()
+        self.assertEqual(build_number, 100)
+        self.assertEqual(build_result, "SUCCESS")
+        self.assertEqual(new_build_tag, "image:tag")
+
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_generated_image_tag(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.get_build_console_output.return_value = "Pushing image to repo/image:tag"
+
+        new_build_tag = adapter.get_generated_image_tag(100, mock_jenkins_instance, "test_job")
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_jenkins_instance.get_build_console_output.assert_called_once_with("test_job", 100)
+        self.assertEqual(new_build_tag, "image:tag")
+
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_triggered_build_status(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.get_build_info.side_effect = [
+            {"building": True},
+            {"building": False, "result": "SUCCESS"}
+        ]
+
+        build_result = adapter.get_triggered_build_status(100, mock_jenkins_instance, "test_job")
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        self.assertEqual(build_result, "SUCCESS")
+
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_get_triggered_build_number(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.get_queue_item.side_effect = [
+            {},
+            {"executable": {"number": 100}}
+        ]
+
+        build_number = adapter.get_triggered_build_number(None, mock_jenkins_instance, 1)
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        self.assertEqual(build_number, 100)
+
+    @patch.object(JenkinsClientAdapter, 'get_server_instance')
+    def test_trigger_build(self, mock_get_server_instance):
+        adapter = JenkinsClientAdapter(env="test")
+        mock_jenkins_instance = mock_get_server_instance.return_value
+        mock_jenkins_instance.build_job.return_value = 1
+
+        queue_item_number = adapter.trigger_build("test_job", "test_org")
+
+        mock_get_server_instance.assert_called_once_with('test_org')
+        mock_jenkins_instance.build_job.assert_called_once_with("test_job", None)
+        self.assertEqual(queue_item_number, 1)
+
+
+if __name__ == '__main__':
+    unittest.main()
