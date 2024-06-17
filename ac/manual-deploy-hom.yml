@@ -1,0 +1,14 @@
+name: Manual Deploy Hom
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup and Deploy
+      uses: ./.github/workflows/setup-and-deploy.yml
+      with:
+        env: hom
