@@ -1,0 +1,15 @@
+name: Daily Deploy Prod
+
+on:
+  schedule:
+    - cron: '0 22 * * *' # Runs every day at 10 PM UTC
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup and Deploy
+      uses: ./.github/workflows/setup-and-deploy.yml
+      with:
+        env: prod
