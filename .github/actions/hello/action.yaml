@@ -1,0 +1,20 @@
+name: Hello World
+author: 'Mehenna missoum'
+description: 'Greet someone and record the time'
+inputs:
+  who_to_greet: 
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+
+outputs:
+  time: 
+    description: 'The time we greeted you
+
+runs:
+  using: "node16"
+  main: index.js
+  pre: 'setup-node.js'
+  pre-if: runner.os == 'Linux'
+  post: 'cleanup-node.js'
+  post-if: runner.os == 'Linux'
