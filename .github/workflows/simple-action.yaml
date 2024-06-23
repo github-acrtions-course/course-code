@@ -10,7 +10,7 @@ jobs:
             
             - name: Simple JS action
               id: greet
-              uses: .github/actions/hello
+              uses: ./.github/actions/hello
               with: 
                 who_to_greet: 'mehenna'
             - name: Log Greeting time
