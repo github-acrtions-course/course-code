@@ -31144,7 +31144,6 @@ try {
     _actions_core__WEBPACK_IMPORTED_MODULE_0___default().startGroup("Logging github context");
     console.log(JSON.stringify((_actions_github__WEBPACK_IMPORTED_MODULE_1___default().context), null, 1));
     _actions_core__WEBPACK_IMPORTED_MODULE_0___default().endGroup();
-
 } catch (error) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0___default().setFailed(error.message);
 }
