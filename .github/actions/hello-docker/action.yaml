@@ -15,3 +15,13 @@ runs:
   using: 'docker'
   #image: 'docker://node:18.16-alpine3.17'
   image: 'Dockerfile'
+  #entrypoint: ['node', '/entrypoint.js']
+  args:
+    - ${{ inputs.who_to_greet }}
+  env:
+    HELLO: WORLD
+  post-entrypoint: "/cleanup.sh"
+  post-if: runner.os == 'Linux'
+  pre-entrypoint: "/setup.sh"
+  pre-if: runner.os == 'Linux'
+
