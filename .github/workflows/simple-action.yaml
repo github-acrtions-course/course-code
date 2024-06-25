@@ -8,9 +8,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
             
-            - name: Simple JS action
+            - name: Simple docker action
               id: greet
-              uses: ./.github/actions/hello/
+              uses: ./.github/actions/hello-docker
               with: 
                 who_to_greet: 'mehenna'
             - name: Log Greeting time

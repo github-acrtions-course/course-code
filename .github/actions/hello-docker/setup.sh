@@ -1,0 +1,1 @@
+echo "Gathering all information related to the instalaton of the action"

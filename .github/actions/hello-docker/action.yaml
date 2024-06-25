@@ -1,0 +1,17 @@
+name: Hello World
+author: 'Mehenna missoum'
+description: 'Greet someone and record the time'
+inputs:
+  who_to_greet: 
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+
+outputs:
+  time: 
+    description: 'The time we greeted you'
+
+runs:
+  using: 'docker'
+  #image: 'docker://node:18.16-alpine3.17'
+  image: 'Dockerfile'
