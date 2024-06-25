@@ -31070,82 +31070,37 @@ module.exports = parseParams
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nccwpck_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nccwpck_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__nccwpck_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nccwpck_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(9425);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5478);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
-
+const core = __nccwpck_require__(9425);
+const github = __nccwpck_require__(5478);
 
 
 try {
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug("Hello, World!");
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().warning("Watch out!");
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().error("This is an error message");
+    core.debug("Hello, World!");
+    core.warning("Watch out!");
+    core.error("This is an error message");
 
-    const name = _actions_core__WEBPACK_IMPORTED_MODULE_0___default().getInput("who_to_greet");
+    const name = core.getInput("who_to_greet");
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().debug("Hello,  ${name}!");
+    core.debug("Hello,  ${name}!");
     const time = new Date();
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().setOutput("time", time.toTimeString());
+    core.setOutput("time", time.toTimeString());
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().exportVariable("HELLO_TIME", time);    
+    core.exportVariable("HELLO_TIME", time);    
 
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().startGroup("Logging github context");
-    console.log(JSON.stringify((_actions_github__WEBPACK_IMPORTED_MODULE_1___default().context), null, 1));
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().endGroup();
+    core.startGroup("Logging github context");
+    console.log(JSON.stringify(github.context, null, 1));
+    core.endGroup();
 } catch (error) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0___default().setFailed(error.message);
+    core.setFailed(error.message);
 }
 
 })();
