@@ -16,5 +16,5 @@ runs:
   main: 'dist/index.js'
   pre: "setup.js"
   pre-if: runner.os == 'Linux'
-  post: 'cleanup-node.js'
+  post: 'cleanup.js'
   post-if: runner.os == 'Linux'
